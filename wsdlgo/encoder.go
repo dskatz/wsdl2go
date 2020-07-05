@@ -25,7 +25,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/fiorix/wsdl2go/wsdl"
+	"github.com/dskatz/wsdl2go/wsdl"
 	"golang.org/x/net/html/charset"
 )
 
@@ -360,7 +360,6 @@ func (ge *goEncoder) cacheTypes(d *wsdl.Definitions) {
 	}
 	// simple types map 1:1 to go basic types
 	for _, v := range d.Schema.SimpleTypes {
-		fmt.Printf("simple type: %s\n", v.Name)
 		ge.stypes[v.Name] = v
 	}
 	// complex types are declared as go struct types
@@ -1086,9 +1085,17 @@ func (ge *goEncoder) renameType(old, name string) {
 // generate, simple types, then complex types.
 func (ge *goEncoder) writeGoTypes(w io.Writer, d *wsdl.Definitions) error {
 	var b bytes.Buffer
+	var wroteType map[string]bool = make(map[string]bool)
 	for _, name := range ge.sortedSimpleTypes() {
 		st := ge.stypes[name]
 		stname := goSymbol(st.Name)
+
+		if _, exists := wroteType[stname]; exists {
+			continue
+		}
+
+		wroteType[stname] = true
+
 		if st.Restriction != nil {
 			ge.writeComments(&b, stname, "")
 			fmt.Fprintf(&b, "type %s %s\n\n", stname, ge.wsdl2goType(st.Restriction.Base))
@@ -1108,6 +1115,7 @@ func (ge *goEncoder) writeGoTypes(w io.Writer, d *wsdl.Definitions) error {
 			fmt.Fprintf(&b, "type %s interface{}\n\n", stname)
 		}
 	}
+
 	var err error
 	for _, name := range ge.sortedComplexTypes() {
 		ct := ge.ctypes[name]
