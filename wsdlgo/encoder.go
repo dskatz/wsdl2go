@@ -360,6 +360,7 @@ func (ge *goEncoder) cacheTypes(d *wsdl.Definitions) {
 	}
 	// simple types map 1:1 to go basic types
 	for _, v := range d.Schema.SimpleTypes {
+		fmt.Printf("simple type: %s\n", v.Name)
 		ge.stypes[v.Name] = v
 	}
 	// complex types are declared as go struct types
